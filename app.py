@@ -1,54 +1,58 @@
 import pandas as pd
-import scipy.stats
+import plotly.graph_objects as go  # Importación de plotly.graph_objects como go
 import streamlit as st
-import time
 
-# estas son variables de estado que se conservan cuando Streamlin vuelve a ejecutar este script
-if 'experiment_no' not in st.session_state:
-    st.session_state['experiment_no'] = 0
+#Configuracion inicia
+st.set_page_config(
+    page_title="Proyecto Sprint 7 | Miller Hurtado",
+    page_icon="🚗",
+    layout="wide",
+    initial_sidebar_state="expanded",
+)
+st.title("Análisis de vehículos usados")
+st.header("Proyecto Sprint 7 — Miller Hurtado")
+st.caption("Explora datos y visualizaciones de vehículos en Estados Unidos.")
 
-if 'df_experiment_results' not in st.session_state:
-    st.session_state['df_experiment_results'] = pd.DataFrame(columns=['no', 'iteraciones', 'media'])
 
-st.header('Lanzar una moneda')
+df_carros = pd.read_csv('vehicles_us.csv')
 
-chart = st.empty()
+boton_histograma = st.button('Construir histograma')
 
-def toss_coin(n):
+if boton_histograma:
+    st.write('Histograma del odómetro de los vehículos en US')
+    fig = go.Figure(data=[go.Histogram(x=df_carros['odometer'])])
+    fig.update_layout(
+        title_text='Distribución del odómetro',
+        xaxis_title='Odómetro (millas)',
+        yaxis_title='Cantidad de vehículos',
+    )
+    st.plotly_chart(fig, use_container_width=True)
+    odometros = df_carros['odometer'].dropna()
+    cantidad_baja = odometros.between(0, 1999).sum()
+    porcentaje_bajo = cantidad_baja / len(odometros) * 100
+    st.caption(
+        'La distribución está sesgada positivamente: la mayoría de los valores '
+        'se concentra en odómetros bajos y hay una cola hacia valores altos. '
+        f'Entre 0 y 1.999 millas hay {cantidad_baja:,} vehículos '
+        f'({porcentaje_bajo:.1f}% de los registros con odómetro), por lo que '
+        'ese intervalo no representa una cantidad considerable del total.'
+    )
 
-    trial_outcomes = scipy.stats.bernoulli.rvs(p=0.5, size=n)
 
-    mean = None
-    outcome_no = 0
-    outcome_1_count = 0
-    means = []
+boton_dispersion = st.button('Construir dispersion')
 
-    for r in trial_outcomes:
-        outcome_no +=1
-        if r == 1:
-            outcome_1_count += 1
-        mean = outcome_1_count / outcome_no
-        means.append(mean)
-        chart.line_chart(means)
-        time.sleep(0.05)
-
-    return mean
-
-number_of_trials = st.slider('¿Número de intentos?', 1, 1000, 10)
-start_button = st.button('Ejecutar')
-
-if start_button:
-    st.write(f'Experimento con {number_of_trials} intentos en curso.')
-    st.session_state['experiment_no'] += 1
-    mean = toss_coin(number_of_trials)
-    st.session_state['df_experiment_results'] = pd.concat([
-        st.session_state['df_experiment_results'],
-        pd.DataFrame(data=[[st.session_state['experiment_no'],
-                            number_of_trials,
-                            mean]],
-                     columns=['no', 'iteraciones', 'media'])
-        ],
-        axis=0)
-    st.session_state['df_experiment_results'] = st.session_state['df_experiment_results'].reset_index(drop=True)
-
-st.write(st.session_state['df_experiment_results'])
+if boton_dispersion:
+    st.write('Dispersión entre el odómetro y el precio de los vehículos')
+    fig = go.Figure(data=[go.Scatter(x=df_carros['odometer'], y=df_carros['price'], mode='markers')])
+    fig.update_layout(
+        title_text='Odómetro vs. precio',
+        xaxis_title='Odómetro (millas)',
+        yaxis_title='Precio (USD)',
+    )
+    st.plotly_chart(fig, use_container_width=True)
+    st.caption(
+        'Cada punto representa un vehículo: su posición horizontal indica el '
+        'odómetro y la vertical, el precio. La dispersión permite observar '
+        'cómo varían los precios entre vehículos con distintos odómetros y '
+        'cuánto difieren los precios para un odómetro similar.'
+    )
