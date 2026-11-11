@@ -24,3 +24,11 @@ También se puede visualizar la aplicación en línea: [Abrir aplicación en Str
    ```
 
 Streamlit mostrará en la terminal la dirección local para abrir la aplicación en el navegador.
+
+## Estructura del repositorio
+
+- `app.py`: aplicación de Streamlit.
+- `vehicles_us.csv`: datos de vehículos usados.
+- `notebooks/`: notebooks de análisis exploratorio.
+- `requirements.txt`: dependencias del proyecto.
+- `README.md`: descripción e instrucciones de uso.
